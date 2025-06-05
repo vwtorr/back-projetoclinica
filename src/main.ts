@@ -1,13 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.enableCors({
-    origin: 'https://front-projeto-clinica.vercel.app',
-    credentials: true,
+app.enableCors({
+    origin: '',
+    methods: '',
+    credentials: false,
+    optionsSuccessStatus: 204,
   });
 
   const config = new DocumentBuilder()
