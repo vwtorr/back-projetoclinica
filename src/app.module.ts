@@ -21,11 +21,11 @@ import { OpeningHoursModule } from './opening-hours/opening-hours.module';
 
     TypeOrmModule.forRoot({
       type: 'postgres', 
-      host: 'localhost',
+      host: 'bancoclinica.postgres.uhserver.com',
       port: 5432,
-      username: 'clinica',
-      password: 'clinica',
-      database: 'clinica',
+      username: 'ufersa',
+      password: 'admin01-',
+      database: 'bancoclinica',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true, 
     }),
