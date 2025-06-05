@@ -6,11 +6,11 @@ export const databaseProviders = [
     useFactory: async () => {
       const dataSource = new DataSource({
         type: 'postgres',
-        host: 'localhost',
+        host: 'bancoclinica.postgres.uhserver.com',
         port: 5432,
-        username: 'clinica',
-        password: 'clinica',
-        database: 'clinica',
+        username: 'ufersa',
+        password: 'admin01-',
+        database: 'bancoclinica',
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: true,
         logger: 'debug',
