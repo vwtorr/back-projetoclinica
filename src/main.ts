@@ -22,10 +22,14 @@ async function bootstrap() {
 
   // Além disso, mantenha o enableCors
   app.enableCors({
-    origin: 'https://front-projeto-clinica.vercel.app',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-  });
+  origin: [
+    'https://front-projeto-clinica.vercel.app',
+    'https://front-projeto-clinica-git-main-vitor-gabriels-projects-82d1d834.vercel.app',
+    'https://front-projeto-clinica-psy2gkdkj.vercel.app'
+  ],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,
+});
 
   const config = new DocumentBuilder()
     .setTitle('Clinica')
