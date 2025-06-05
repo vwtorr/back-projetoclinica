@@ -8,11 +8,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 app.enableCors({
-    origin: '',
-    methods: '',
-    credentials: false,
-    optionsSuccessStatus: 204,
-  });
+  origin: 'https://front-projeto-clinica.vercel.app',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // use isso se houver cookies/autenticação
+});
+
 
   const config = new DocumentBuilder()
     .setTitle('Clinica')
