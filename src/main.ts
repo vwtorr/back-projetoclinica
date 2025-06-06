@@ -8,7 +8,6 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Middleware para responder a requisições OPTIONS
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', 'https://front-projeto-clinica.vercel.app');
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
@@ -20,7 +19,6 @@ async function bootstrap() {
     next();
   });
 
-  // Além disso, mantenha o enableCors
   app.enableCors({
   origin: [
     'https://front-projeto-clinica.vercel.app',
