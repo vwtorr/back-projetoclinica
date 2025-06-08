@@ -29,25 +29,17 @@ async function bootstrap() {
 
   const environment = process.env.ENVIRONMENT || 'production';
 
-  if (environment === 'development') {
-    const config = new DocumentBuilder()
-      .addBearerAuth()
-      .setTitle(process.env.NAME || 'API')
-      .setDescription(process.env.NAME || 'API Docs')
-      .setVersion(process.env.VERSION || '1.0')
-      .build();
+  if (environment === 'development' || environment === 'production') {
+  const config = new DocumentBuilder()
+    .addBearerAuth()
+    .setTitle(process.env.NAME || 'API')
+    .setDescription(process.env.NAME || 'API Docs')
+    .setVersion(process.env.VERSION || '1.0')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup(process.env.DOCS_URL || 'docs', app, document, {
-      swaggerOptions: {
-        filter: true,
-        docExpansion: 'none',
-        operationsSorter: 'alpha',
-        tagsSorter: 'alpha',
-        showRequestDuration: true,
-      },
-    });
-  }
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup(process.env.DOCS_URL || 'docs', app, document);
+}
 
   const port = process.env.APP_PORT || 3000;
   await app.listen(port);
