@@ -2,46 +2,55 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import * as compression from 'compression';
+import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
-    const allowedOrigins = [
-    'https://front-projeto-clinica.vercel.app',
-    'https://front-projeto-clinica-git-main-vitor-gabriels-projects-82d1d834.vercel.app',
-    'https://front-projeto-clinica-psy2gkdkj.vercel.app'
-  ];
-  
+  const urls = process.env.URLS.split(',').map((url: string) => url.trim());
+  const methods = process.env.METHODS.split(',').map((url: string) =>
+    url.trim(),
+  );
+
+  app.use(compression());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      skipMissingProperties: true,
+      skipNullProperties: true,
+    }),
+  );
+
   app.enableCors({
-    origin: (origin, callback) => {
-      // O 'origin' será a URL exata do seu front-end.
-      // Em ambientes de teste, requisições do mesmo servidor (ex: Postman) podem não ter 'origin'.
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        console.log('CORS Aprovado para a origem:', origin);
-        callback(null, true);
-      } else {
-        console.log('CORS Bloqueado para a origem:', origin);
-        callback(new Error('Origem não permitida por CORS'));
-      }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    origin: '*',
+    methods: '*',
+    credentials: false,
+    optionsSuccessStatus: 204,
   });
 
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", '*'],
+        },
+      },
+    }),
+  );
+
   const config = new DocumentBuilder()
-    .setTitle('Clinica')
-    .setDescription('description')
-    .setVersion('1.0')
-    .addTag('Clinica')
+    .setTitle(process.env.SWAGGER_TITLE)
+    .setDescription(process.env.SWAGGER_DESCRIPTION)
+    .setVersion(process.env.SWAGGER_VERSION)
     .addBearerAuth()
     .build();
-
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+  SwaggerModule.setup(process.env.SWAGGER_DOC_URL, app, documentFactory);
 
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-
