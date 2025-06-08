@@ -1,74 +1,72 @@
-// main.ts
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import * as compression from 'compression';
-import helmet from 'helmet';
-import * as dotenv from 'dotenv'; // Importe o dotenv para carregar as variáveis de ambiente
-
-// Carrega as variáveis de ambiente do arquivo .env
+// 1. Instale o dotenv: yarn add dotenv
+import * as dotenv from 'dotenv';
+// 2. Carregue as variáveis de ambiente ANTES de qualquer outro código
 dotenv.config();
+
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
+import * as compression from 'compression';
+import { AppModule } from './app.module';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // --- MIDDLEWARES DE SEGURANÇA E PERFORMANCE ---
+  // --- PREPARAÇÃO DAS VARIÁVEIS DE AMBIENTE ---
+  // Adiciona '|| ""' para garantir que, se a variável não existir, o código não quebre.
+  const allowedOrigins = (process.env.URLS || '').split(',').map((url) => url.trim());
+  const allowedMethods = (process.env.METHODS || '').split(',');
 
-  // Helmet adiciona vários cabeçalhos de segurança. É uma boa prática aplicá-lo primeiro.
-  // A configuração padrão do helmet é mais segura do que a personalizada com falhas.
-  // A diretiva `scriptSrc: '*'` foi removida por ser uma grande falha de segurança (XSS).
-  // Swagger UI pode precisar de uma configuração de CSP específica se você a mantiver.
-  app.use(helmet());
+  // --- MIDDLEWARES E CONFIGURAÇÕES GLOBAIS ---
+  app.use(helmet()); // Padrões de segurança do Helmet. Mais seguro que uma configuração customizada com falhas.
+  app.use(compression());
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
-  // Habilita o CORS de forma mais segura.
-  // Evite usar '*' em produção. Use uma lista de origens permitidas vinda de variáveis de ambiente.
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    origin: allowedOrigins,
+    methods: allowedMethods,
     credentials: true,
   });
 
-  // Comprime as respostas da API para melhor performance.
-  app.use(compression());
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
 
-  // --- CONFIGURAÇÃO GLOBAL ---
+  // --- SWAGGER (DOCUMENTAÇÃO) ---
+  // Corrigido para usar a variável de ambiente correta e evitar erros.
+  const environment = process.env.ENVIRONMENT || 'production';
 
-  // Pipe de validação global com uma configuração robusta.
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      skipMissingProperties: true, // Mantido conforme sua configuração
-      skipNullProperties: true,    // Mantido conforme sua configuração
-    }),
-  );
+  if (environment === 'development') {
+    const config = new DocumentBuilder()
+      .addBearerAuth()
+      .setTitle(process.env.NAME || 'API')
+      .setDescription(process.env.NAME || 'API Docs')
+      .setVersion(process.env.VERSION || '1.0')
+      .build();
 
-  // --- CONFIGURAÇÃO DO SWAGGER (DOCUMENTAÇÃO) ---
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup(process.env.DOCS_URL || 'docs', app, document, {
+      swaggerOptions: {
+        filter: true,
+        docExpansion: 'none',
+        operationsSorter: 'alpha',
+        tagsSorter: 'alpha',
+        showRequestDuration: true,
+      },
+    });
+  }
 
-  // Use valores padrão para evitar que a aplicação quebre se as variáveis de ambiente não existirem.
-  const swaggerTitle = process.env.SWAGGER_TITLE || 'API Documentation';
-  const swaggerDescription = process.env.SWAGGER_DESCRIPTION || 'The API description';
-  const swaggerVersion = process.env.SWAGGER_VERSION || '1.0';
-  const swaggerDocUrl = process.env.SWAGGER_DOC_URL || 'docs'; // Previne o erro 'charAt of undefined'
-
-  const config = new DocumentBuilder()
-    .setTitle(swaggerTitle)
-    .setDescription(swaggerDescription)
-    .setVersion(swaggerVersion)
-    .addBearerAuth()
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(swaggerDocUrl, app, document);
-
-  // --- INICIALIZAÇÃO DA APLICAÇÃO ---
-
-  const port = process.env.PORT || 3000;
+  // --- INICIALIZAÇÃO ---
+  const port = process.env.APP_PORT || 3000; // Usa a porta do .env ou 3000 como padrão.
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/${swaggerDocUrl}`);
+  console.log(`🚀 Servidor rodando na porta ${port}`);
+  if (environment === 'development') {
+    console.log(`📚 Documentação disponível em http://localhost:${port}/${process.env.DOCS_URL || 'docs'}`);
+  }
 }
 bootstrap();
