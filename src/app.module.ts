@@ -11,8 +11,6 @@ import { AddressModule } from './address/address.module';
 import { PatientsNotesModule } from './patients_notes/patients_notes.module';
 import { AuthModule } from './auth/auth.module';
 import { RolesModule } from './roles/roles.module';
-import { CepController } from './viacep/cep.controller';
-import { CepService } from './viacep/cep.service';
 import { HttpModule } from '@nestjs/axios';
 import { OpeningHoursModule } from './opening-hours/opening-hours.module';
 
@@ -42,7 +40,5 @@ import { OpeningHoursModule } from './opening-hours/opening-hours.module';
     HttpModule,
     OpeningHoursModule,
   ],
-  controllers: [AppController, CepController],
-  providers: [AppService, CepService],
 })
 export class AppModule {}
