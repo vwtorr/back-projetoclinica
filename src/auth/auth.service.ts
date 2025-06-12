@@ -11,19 +11,25 @@ export class AuthService {
   ) {}
 
   async signIn(email: string, pass: string): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOneByEmail(email);
-    const match = await argon2.verify(user?.password, pass);
-    if (!match) {
-      throw new UnauthorizedException();
-    }
+  const user = await this.usersService.findOneByEmail(email);
 
-    const payload = {
-      sub: user.id,
-      username: user.name,
-      role: user?.role?.name,
-    };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-    };
+  if (!user || !user.password) {
+    throw new UnauthorizedException('Credenciais inválidas.');
   }
+
+  const match = await argon2.verify(user.password, pass);
+  if (!match) {
+    throw new UnauthorizedException('Credenciais inválidas.');
+  }
+
+  const payload = {
+    sub: user.id,
+    username: user.name,
+    role: user?.role?.name,
+  };
+
+  return {
+    access_token: await this.jwtService.signAsync(payload),
+  };
+}
 }
